@@ -36,6 +36,7 @@ jobs:
         with:
           name: Checkstyle Report
           path: '**/build/reports/checkstyle/*.xml'
+
   test:
     name: Testing on JDK ${{ matrix.java }}
     runs-on: ubuntu-latest
@@ -44,15 +45,25 @@ jobs:
         java: [ '8', '11', '17' ]
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.Java }}
-      - name: Execute tests
-        uses: gradle/gradle-build-action@v2.2.1
+
+      - name: Setup gradle cache
+        uses: actions/cache@v3
         with:
-          arguments: test
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Execute tests
+        run: ./gradlew clean test
 
       - name: Publish test report
         uses: mikepenz/action-junit-report@v3.0.3
